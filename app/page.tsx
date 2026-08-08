@@ -27,10 +27,14 @@ export default function Home() {
       return;
     }
 
-    setFileName(file.name);
+    if (photo) {
+      URL.revokeObjectURL(photo);
+    }
 
     const imageUrl = URL.createObjectURL(file);
+
     setPhoto(imageUrl);
+    setFileName(file.name);
   };
 
   const handleFileChange = (
@@ -44,6 +48,10 @@ export default function Home() {
   };
 
   const removePhoto = () => {
+    if (photo) {
+      URL.revokeObjectURL(photo);
+    }
+
     setPhoto(null);
     setFileName("");
 
@@ -51,6 +59,8 @@ export default function Home() {
       fileInputRef.current.value = "";
     }
   };
+
+  const builderTitle = getBuilderTitle(role);
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#fff8ed] text-[#17251d]">
@@ -80,10 +90,8 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Main */}
+      {/* Heading */}
       <section className="relative z-10 mx-auto max-w-7xl px-6 pb-24 pt-8 md:px-10">
-        
-        {/* Heading */}
         <div className="mx-auto max-w-3xl text-center">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#17251d]/15 bg-white/60 px-4 py-2 text-xs font-bold backdrop-blur-md">
             <span className="h-2 w-2 rounded-full bg-[#ef6c3d]" />
@@ -100,98 +108,18 @@ export default function Home() {
 
           <p className="mx-auto mt-6 max-w-lg text-sm leading-6 text-[#17251d]/60 md:text-base">
             Add your photo and a few details.
-            We will turn them into your HH Goa 2026
-            builder identity.
+            Your builder identity updates live.
           </p>
         </div>
 
-        {/* Builder creator */}
-        <div className="mx-auto mt-12 grid max-w-5xl gap-8 lg:grid-cols-2">
+        {/* Creator */}
+        <div className="mx-auto mt-12 grid max-w-6xl gap-10 lg:grid-cols-[0.9fr_1.1fr]">
 
-          {/* LEFT — Photo */}
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-black tracking-[0.2em] text-[#ef6c3d]">
-                  STEP 01
-                </p>
-
-                <h2 className="mt-1 text-2xl font-black">
-                  Your photo
-                </h2>
-              </div>
-
-              {photo && (
-                <button
-                  onClick={removePhoto}
-                  className="text-xs font-bold text-[#17251d]/50 transition hover:text-[#ef6c3d]"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/heic,image/heif"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-
-            {!photo ? (
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="group relative flex min-h-[440px] w-full flex-col items-center justify-center overflow-hidden rounded-[2rem] border-2 border-[#17251d] bg-[#f7e6ca] p-8 text-center shadow-[8px_8px_0px_#17251d] transition-all duration-200 hover:-translate-y-1 hover:shadow-[12px_12px_0px_#17251d]"
-              >
-                <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-[#ef6c3d] text-4xl transition-transform duration-300 group-hover:rotate-12">
-                  +
-                </div>
-
-                <h3 className="text-2xl font-black">
-                  Upload your photo
-                </h3>
-
-                <p className="mt-3 max-w-xs text-sm leading-6 text-[#17251d]/55">
-                  Use a clear photo of yourself.
-                  Portrait, landscape or square all work.
-                </p>
-
-                <div className="mt-6 rounded-full bg-[#17251d] px-5 py-2 text-xs font-bold text-white">
-                  JPG • PNG • HEIC
-                </div>
-              </button>
-            ) : (
-              <div className="relative overflow-hidden rounded-[2rem] border-2 border-[#17251d] bg-[#17251d] p-2 shadow-[8px_8px_0px_#ef6c3d]">
-                <div className="relative h-[440px] overflow-hidden rounded-[1.5rem] bg-black">
-                  <img
-                    src={photo}
-                    alt="Uploaded builder"
-                    className="h-full w-full object-cover"
-                  />
-
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-5 pt-20">
-                    <p className="truncate text-xs font-bold text-white/70">
-                      {fileName}
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute right-5 top-5 rounded-full bg-white px-4 py-2 text-xs font-black shadow-lg"
-                >
-                  Change photo
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT — Form */}
+          {/* LEFT SIDE */}
           <div>
             <div className="mb-3">
               <p className="text-xs font-black tracking-[0.2em] text-[#ef6c3d]">
-                STEP 02
+                BUILDER PROFILE
               </p>
 
               <h2 className="mt-1 text-2xl font-black">
@@ -201,8 +129,65 @@ export default function Home() {
 
             <div className="rounded-[2rem] border-2 border-[#17251d] bg-white p-6 shadow-[8px_8px_0px_#17251d] md:p-8">
 
-              {/* Name */}
+              {/* Photo */}
               <div>
+                <label className="text-xs font-black tracking-[0.15em]">
+                  YOUR PHOTO
+                </label>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/heic,image/heif"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+
+                {!photo ? (
+                  <button
+                    onClick={() =>
+                      fileInputRef.current?.click()
+                    }
+                    className="mt-3 flex h-48 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#17251d]/25 bg-[#f7e6ca] transition hover:border-[#ef6c3d] hover:bg-[#f4dfbd]"
+                  >
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#ef6c3d] text-3xl text-white">
+                      +
+                    </div>
+
+                    <p className="mt-3 text-sm font-black">
+                      Upload your photo
+                    </p>
+
+                    <p className="mt-1 text-xs text-[#17251d]/50">
+                      JPG • PNG • HEIC
+                    </p>
+                  </button>
+                ) : (
+                  <div className="mt-3">
+                    <div className="relative h-48 overflow-hidden rounded-2xl bg-[#17251d]">
+                      <img
+                        src={photo}
+                        alt="Uploaded builder"
+                        className="h-full w-full object-cover"
+                      />
+
+                      <button
+                        onClick={removePhoto}
+                        className="absolute right-3 top-3 rounded-full bg-white px-3 py-2 text-xs font-black shadow-lg"
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <p className="mt-2 truncate text-xs text-[#17251d]/50">
+                      {fileName}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Name */}
+              <div className="mt-6">
                 <label className="text-xs font-black tracking-[0.15em]">
                   YOUR NAME
                 </label>
@@ -218,7 +203,7 @@ export default function Home() {
               </div>
 
               {/* Role */}
-              <div className="mt-6">
+              <div className="mt-5">
                 <label className="text-xs font-black tracking-[0.15em]">
                   WHAT DO YOU DO?
                 </label>
@@ -234,7 +219,7 @@ export default function Home() {
               </div>
 
               {/* Stack */}
-              <div className="mt-6">
+              <div className="mt-5">
                 <label className="text-xs font-black tracking-[0.15em]">
                   YOUR STACK
                 </label>
@@ -243,46 +228,174 @@ export default function Home() {
                   type="text"
                   value={stack}
                   onChange={(e) => setStack(e.target.value)}
-                  placeholder="e.g. React • Node • Python"
+                  placeholder="React • Node • MongoDB"
                   maxLength={45}
                   className="mt-2 w-full rounded-2xl border-2 border-[#17251d]/15 bg-[#fff8ed] px-4 py-4 text-sm font-semibold outline-none transition focus:border-[#ef6c3d]"
                 />
               </div>
 
-              {/* Builder title preview */}
-              <div className="mt-7 rounded-2xl bg-[#f7e6ca] p-5">
+              {/* Generated title */}
+              <div className="mt-6 rounded-2xl bg-[#f7e6ca] p-5">
                 <p className="text-[10px] font-black tracking-[0.2em] text-[#ef6c3d]">
-                  YOUR BUILDER TITLE
+                  GENERATED BUILDER TITLE
                 </p>
 
                 <p className="mt-2 text-xl font-black">
-                  {role
-                    ? getBuilderTitle(role)
-                    : "The Future Builder"}
+                  {builderTitle}
                 </p>
 
                 <p className="mt-1 text-xs text-[#17251d]/50">
-                  Generated from your role
+                  Based on your role
                 </p>
               </div>
-
-              {/* Generate button */}
-              <button
-                disabled={!photo || !name || !role || !stack}
-                className="mt-7 w-full rounded-2xl bg-[#ef6c3d] px-6 py-4 text-sm font-black text-white shadow-[5px_5px_0px_#17251d] transition-all hover:-translate-y-0.5 hover:shadow-[7px_7px_0px_#17251d] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-[5px_5px_0px_#17251d]"
-              >
-                GENERATE MY BUILDER CARD ↗
-              </button>
-
-              <p className="mt-4 text-center text-xs text-[#17251d]/40">
-                No signup required • Your photo stays in your browser
-              </p>
             </div>
+          </div>
+
+          {/* RIGHT SIDE — LIVE CARD */}
+          <div>
+            <div className="mb-3 flex items-end justify-between">
+              <div>
+                <p className="text-xs font-black tracking-[0.2em] text-[#ef6c3d]">
+                  LIVE PREVIEW
+                </p>
+
+                <h2 className="mt-1 text-2xl font-black">
+                  Your Builder Card
+                </h2>
+              </div>
+
+              <span className="rounded-full bg-[#17251d] px-3 py-1 text-[10px] font-black tracking-wider text-white">
+                LIVE
+              </span>
+            </div>
+
+            {/* CARD */}
+            <div className="mx-auto max-w-[520px] rounded-[2rem] border-2 border-[#17251d] bg-white p-3 shadow-[10px_10px_0px_#ef6c3d]">
+              <div className="relative overflow-hidden rounded-[1.5rem] bg-[#f7e6ca]">
+
+                {/* Card background decorations */}
+                <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#f6b73c]" />
+
+                <div className="absolute -bottom-20 -left-10 h-44 w-64 rounded-[50%] bg-[#4ea8a1] opacity-80" />
+
+                <div className="absolute bottom-0 right-0 text-[110px] opacity-[0.08]">
+                  🌴
+                </div>
+
+                {/* Card header */}
+                <div className="relative z-10 flex items-start justify-between p-6">
+                  <div>
+                    <div className="text-2xl font-black tracking-tight">
+                      HH GOA
+                    </div>
+
+                    <div className="text-[10px] font-black tracking-[0.35em]">
+                      2026
+                    </div>
+                  </div>
+
+                  <div className="rounded-full bg-[#17251d] px-3 py-1.5 text-[9px] font-black tracking-wider text-white">
+                    BUILDER
+                  </div>
+                </div>
+
+                {/* Photo */}
+                <div className="relative z-10 px-6">
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-[1.5rem] border-2 border-[#17251d] bg-[#fff8ed] shadow-[5px_5px_0px_#17251d]">
+                    {photo ? (
+                      <img
+                        src={photo}
+                        alt="Builder preview"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full flex-col items-center justify-center text-center">
+                        <div className="text-5xl opacity-30">
+                          ☀
+                        </div>
+
+                        <p className="mt-3 text-xs font-black uppercase tracking-wider text-[#17251d]/40">
+                          Your photo goes here
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Card information */}
+                <div className="relative z-10 p-6">
+
+                  <div className="text-3xl font-black leading-none tracking-[-0.04em] md:text-4xl">
+                    {name || "YOUR NAME"}
+                  </div>
+
+                  <div className="mt-2 text-xs font-black uppercase tracking-[0.15em] text-[#ef6c3d]">
+                    {role || "YOUR ROLE"}
+                  </div>
+
+                  {/* Stack */}
+                  <div className="mt-5">
+                    <p className="text-[9px] font-black tracking-[0.2em] text-[#17251d]/40">
+                      STACK
+                    </p>
+
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {getStackItems(stack).map(
+                        (item, index) => (
+                          <span
+                            key={`${item}-${index}`}
+                            className="rounded-full border border-[#17251d]/15 bg-white/70 px-3 py-1.5 text-[10px] font-bold backdrop-blur-sm"
+                          >
+                            {item}
+                          </span>
+                        )
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Builder title */}
+                  <div className="mt-6 rounded-2xl border-2 border-[#17251d] bg-[#ef6c3d] p-4 text-white shadow-[4px_4px_0px_#17251d]">
+                    <p className="text-[8px] font-black tracking-[0.2em] opacity-70">
+                      BUILDER TITLE
+                    </p>
+
+                    <p className="mt-1 text-xl font-black">
+                      {builderTitle}
+                    </p>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="mt-6 flex items-end justify-between">
+                    <div>
+                      <p className="text-[9px] font-black tracking-[0.15em]">
+                        BUILD • SHIP • CONNECT
+                      </p>
+
+                      <p className="mt-1 text-[8px] text-[#17251d]/40">
+                        HH Goa 2026
+                      </p>
+                    </div>
+
+                    <div className="text-xs font-black">
+                      #FrameInGoa
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Generate button */}
+            <button
+              disabled={!photo || !name || !role || !stack}
+              className="mx-auto mt-8 block w-full max-w-[520px] rounded-2xl bg-[#17251d] px-6 py-4 text-sm font-black text-white shadow-[5px_5px_0px_#ef6c3d] transition-all hover:-translate-y-0.5 hover:shadow-[7px_7px_0px_#ef6c3d] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              GENERATE MY BUILDER CARD ↗
+            </button>
           </div>
         </div>
       </section>
 
-      {/* Bottom waves */}
+      {/* Waves */}
       <div className="wave-decoration">
         <div />
         <div />
@@ -298,7 +411,10 @@ export default function Home() {
   );
 }
 
-/* Builder title generator */
+/* -----------------------------
+   Builder title generator
+----------------------------- */
+
 function getBuilderTitle(role: string) {
   const value = role.toLowerCase();
 
@@ -362,4 +478,20 @@ function getBuilderTitle(role: string) {
   }
 
   return "The Future Builder";
+}
+
+/* -----------------------------
+   Stack formatting
+----------------------------- */
+
+function getStackItems(stack: string) {
+  if (!stack.trim()) {
+    return ["YOUR STACK"];
+  }
+
+  return stack
+    .split(/[•,|]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 6);
 }
