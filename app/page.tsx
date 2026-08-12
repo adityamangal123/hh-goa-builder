@@ -19,7 +19,7 @@ export default function Home() {
 
   const builderTitle = getBuilderTitle(role);
 
-  const handleUpload = (file: File) => {
+   const handleUpload = async (file: File) => {
     if (!file) return;
 
     const validTypes = [

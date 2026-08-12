@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { normalizeImageFile } from "../lib/imageUtils";
 
 type PhotoUploadProps = {
   photo: string | null;
   fileName: string;
-  onUpload: (file: File) => void;
+  onUpload: (file: File) => Promise<void>;
   onRemove: () => void;
 };
 
@@ -16,16 +17,45 @@ export default function PhotoUpload({
   onRemove,
 }: PhotoUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isConverting, setIsConverting] = useState(false);
 
-  const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
+ const handleChange = async (
+  event: React.ChangeEvent<HTMLInputElement>
+) => {
+  const file = event.target.files?.[0];
 
-    if (file) {
-      onUpload(file);
-    }
-  };
+  if (!file) return;
+
+  try {
+    setIsConverting(true);
+
+    const normalizedFile = await normalizeImageFile(file);
+
+    const normalizedName =
+      file.name.toLowerCase().endsWith(".heic") ||
+      file.name.toLowerCase().endsWith(".heif")
+        ? file.name.replace(/\.(heic|heif)$/i, ".png")
+        : file.name;
+
+    const normalized = new File(
+      [normalizedFile],
+      normalizedName,
+      {
+        type: normalizedFile.type || "image/png",
+      }
+    );
+
+    await onUpload(normalized);
+  } catch (error) {
+    console.error("Image conversion failed:", error);
+
+    alert(
+      "We couldn't process this photo. Please try another JPG, PNG or HEIC image."
+    );
+  } finally {
+    setIsConverting(false);
+  }
+};
 
   return (
     <div>
@@ -44,20 +74,39 @@ export default function PhotoUpload({
       {!photo ? (
         <button
           type="button"
+          disabled={isConverting}
           onClick={() => fileInputRef.current?.click()}
           className="mt-3 flex h-48 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#17251d]/25 bg-[#f7e6ca] transition hover:border-[#ef6c3d] hover:bg-[#f4dfbd]"
         >
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#ef6c3d] text-3xl text-white">
-            +
-          </div>
+            {isConverting ? (
+    <>
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#17251d] text-xl text-white">
+        …
+        </div>
 
-          <p className="mt-3 text-sm font-black">
-            Upload your photo
-          </p>
+        <p className="mt-3 text-sm font-black">
+        Processing photo...
+        </p>
 
-          <p className="mt-1 text-xs text-[#17251d]/50">
-            JPG • PNG • HEIC
-          </p>
+        <p className="mt-1 text-xs text-[#17251d]/50">
+        Preparing your image
+        </p>
+    </>
+    ) : (
+    <>
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#ef6c3d] text-3xl text-white">
+        +
+        </div>
+
+        <p className="mt-3 text-sm font-black">
+        Upload your photo
+        </p>
+
+        <p className="mt-1 text-xs text-[#17251d]/50">
+        JPG • PNG • HEIC
+        </p>
+    </>
+    )}
         </button>
       ) : (
         <div className="mt-3">
