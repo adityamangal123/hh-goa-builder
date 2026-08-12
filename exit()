@@ -1,0 +1,545 @@
+[1mdiff --git a/app/components/BuilderCard.tsx b/app/components/BuilderCard.tsx[m
+[1mindex f29d225..8974063 100644[m
+[1m--- a/app/components/BuilderCard.tsx[m
+[1m+++ b/app/components/BuilderCard.tsx[m
+[36m@@ -1,11 +1,27 @@[m
+ "use client";[m
+ [m
+[32m+[m[32mimport {[m
+[32m+[m[32m  useRef,[m
+[32m+[m[32m  useState,[m
+[32m+[m[32m  type PointerEvent as ReactPointerEvent,[m
+[32m+[m[32m} from "react";[m
+[32m+[m
+[32m+[m[32mtype PhotoPosition = {[m
+[32m+[m[32m  x: number;[m
+[32m+[m[32m  y: number;[m
+[32m+[m[32m  zoom: number;[m
+[32m+[m[32m};[m
+[32m+[m
+ type BuilderCardProps = {[m
+   photo: string | null;[m
+   name: string;[m
+   role: string;[m
+   stack: string;[m
+   builderTitle: string;[m
+[32m+[m[32m  photoPosition: PhotoPosition;[m
+[32m+[m[32m  onPhotoPositionChange: ([m
+[32m+[m[32m    position: PhotoPosition[m
+[32m+[m[32m  ) => void;[m
+ };[m
+ [m
+ export default function BuilderCard({[m
+[36m@@ -14,9 +30,141 @@[m [mexport default function BuilderCard({[m
+   role,[m
+   stack,[m
+   builderTitle,[m
+[32m+[m[32m  photoPosition,[m
+[32m+[m[32m  onPhotoPositionChange,[m
+ }: BuilderCardProps) {[m
+   const stackItems = getStackItems(stack);[m
+ [m
+[32m+[m[32m  const photoContainerRef =[m
+[32m+[m[32m    useRef<HTMLDivElement>(null);[m
+[32m+[m
+[32m+[m[32m  const dragRef = useRef({[m
+[32m+[m[32m    active: false,[m
+[32m+[m[32m    startX: 0,[m
+[32m+[m[32m    startY: 0,[m
+[32m+[m[32m    startPhotoX: 50,[m
+[32m+[m[32m    startPhotoY: 50,[m
+[32m+[m[32m  });[m
+[32m+[m
+[32m+[m[32m  const [isDraggingPhoto, setIsDraggingPhoto] =[m
+[32m+[m[32m    useState(false);[m
+[32m+[m
+[32m+[m[32m  const handlePhotoPointerDown = ([m
+[32m+[m[32m    event: ReactPointerEvent<HTMLDivElement>[m
+[32m+[m[32m  ) => {[m
+[32m+[m[32m    if (!photo) return;[m
+[32m+[m
+[32m+[m[32m    event.preventDefault();[m
+[32m+[m
+[32m+[m[32m    event.currentTarget.setPointerCapture([m
+[32m+[m[32m      event.pointerId[m
+[32m+[m[32m    );[m
+[32m+[m
+[32m+[m[32m    dragRef.current = {[m
+[32m+[m[32m      active: true,[m
+[32m+[m[32m      startX: event.clientX,[m
+[32m+[m[32m      startY: event.clientY,[m
+[32m+[m[32m      startPhotoX: photoPosition.x,[m
+[32m+[m[32m      startPhotoY: photoPosition.y,[m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    setIsDraggingPhoto(true);[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  const handlePhotoPointerMove = ([m
+[32m+[m[32m    event: ReactPointerEvent<HTMLDivElement>[m
+[32m+[m[32m  ) => {[m
+[32m+[m[32m    if (!dragRef.current.active) return;[m
+[32m+[m
+[32m+[m[32m    const container =[m
+[32m+[m[32m      photoContainerRef.current;[m
+[32m+[m
+[32m+[m[32m    if (!container) return;[m
+[32m+[m
+[32m+[m[32m    const rect =[m
+[32m+[m[32m      container.getBoundingClientRect();[m
+[32m+[m
+[32m+[m[32m    const deltaX =[m
+[32m+[m[32m      ((event.clientX - dragRef.current.startX) /[m
+[32m+[m[32m        rect.width) *[m
+[32m+[m[32m      100;[m
+[32m+[m
+[32m+[m[32m    const deltaY =[m
+[32m+[m[32m      ((event.clientY - dragRef.current.startY) /[m
+[32m+[m[32m        rect.height) *[m
+[32m+[m[32m      100;[m
+[32m+[m
+[32m+[m[32m    const nextX = Math.max([m
+[32m+[m[32m      0,[m
+[32m+[m[32m      Math.min([m
+[32m+[m[32m        100,[m
+[32m+[m[32m        dragRef.current.startPhotoX + deltaX[m
+[32m+[m[32m      )[m
+[32m+[m[32m    );[m
+[32m+[m
+[32m+[m[32m    const nextY = Math.max([m
+[32m+[m[32m      0,[m
+[32m+[m[32m      Math.min([m
+[32m+[m[32m        100,[m
+[32m+[m[32m        dragRef.current.startPhotoY + deltaY[m
+[32m+[m[32m      )[m
+[32m+[m[32m    );[m
+[32m+[m
+[32m+[m[32m    onPhotoPositionChange({[m
+[32m+[m[32m      ...photoPosition,[m
+[32m+[m[32m      x: nextX,[m
+[32m+[m[32m      y: nextY,[m
+[32m+[m[32m    });[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  const handlePhotoPointerUp = ([m
+[32m+[m[32m    event: ReactPointerEvent<HTMLDivElement>[m
+[32m+[m[32m  ) => {[m
+[32m+[m[32m    dragRef.current.active = false;[m
+[32m+[m
+[32m+[m[32m    setIsDraggingPhoto(false);[m
+[32m+[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      event.currentTarget.releasePointerCapture([m
+[32m+[m[32m        event.pointerId[m
+[32m+[m[32m      );[m
+[32m+[m[32m    } catch {[m
+[32m+[m[32m      // Pointer capture may already be released.[m
+[32m+[m[32m    }[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  const zoomOut = () => {[m
+[32m+[m[32m    onPhotoPositionChange({[m
+[32m+[m[32m      ...photoPosition,[m
+[32m+[m[32m      zoom: Math.max([m
+[32m+[m[32m        1,[m
+[32m+[m[32m        Number([m
+[32m+[m[32m          (photoPosition.zoom - 0.1).toFixed(2)[m
+[32m+[m[32m        )[m
+[32m+[m[32m      ),[m
+[32m+[m[32m    });[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  const zoomIn = () => {[m
+[32m+[m[32m    onPhotoPositionChange({[m
+[32m+[m[32m      ...photoPosition,[m
+[32m+[m[32m      zoom: Math.min([m
+[32m+[m[32m        2,[m
+[32m+[m[32m        Number([m
+[32m+[m[32m          (photoPosition.zoom + 0.1).toFixed(2)[m
+[32m+[m[32m        )[m
+[32m+[m[32m      ),[m
+[32m+[m[32m    });[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  const resetPhoto = () => {[m
+[32m+[m[32m    onPhotoPositionChange({[m
+[32m+[m[32m      x: 50,[m
+[32m+[m[32m      y: 50,[m
+[32m+[m[32m      zoom: 1,[m
+[32m+[m[32m    });[m
+[32m+[m[32m  };[m
+[32m+[m
+   return ([m
+     <div>[m
+       {/* Preview heading */}[m
+[36m@@ -39,7 +187,6 @@[m [mexport default function BuilderCard({[m
+       {/* Card */}[m
+       <div className="mx-auto max-w-[520px] rounded-[2rem] border-2 border-[#17251d] bg-white p-3 shadow-[10px_10px_0px_#ef6c3d]">[m
+         <div className="relative overflow-hidden rounded-[1.5rem] bg-[#f7e6ca]">[m
+[31m-[m
+           {/* Background sun */}[m
+           <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#f6b73c]" />[m
+ [m
+[36m@@ -70,14 +217,54 @@[m [mexport default function BuilderCard({[m
+ [m
+           {/* Photo */}[m
+           <div className="relative z-10 px-6">[m
+[31m-            <div className="relative aspect-[4/3] overflow-hidden rounded-[1.5rem] border-2 border-[#17251d] bg-[#fff8ed] shadow-[5px_5px_0px_#17251d]">[m
+[31m-[m
+[32m+[m[32m            <div[m
+[32m+[m[32m              ref={photoContainerRef}[m
+[32m+[m[32m              onPointerDown={[m
+[32m+[m[32m                handlePhotoPointerDown[m
+[32m+[m[32m              }[m
+[32m+[m[32m              onPointerMove={[m
+[32m+[m[32m                handlePhotoPointerMove[m
+[32m+[m[32m              }[m
+[32m+[m[32m              onPointerUp={handlePhotoPointerUp}[m
+[32m+[m[32m              onPointerCancel={[m
+[32m+[m[32m                handlePhotoPointerUp[m
+[32m+[m[32m              }[m
+[32m+[m[32m              className={`relative aspect-[4/3] touch-none select-none overflow-hidden rounded-[1.5rem] border-2 border-[#17251d] bg-[#fff8ed] shadow-[5px_5px_0px_#17251d] ${[m
+[32m+[m[32m                photo[m
+[32m+[m[32m                  ? isDraggingPhoto[m
+[32m+[m[32m                    ? "cursor-grabbing"[m
+[32m+[m[32m                    : "cursor-grab"[m
+[32m+[m[32m                  : ""[m
+[32m+[m[32m              }`}[m
+[32m+[m[32m            >[m
+               {photo ? ([m
+[31m-                <img[m
+[31m-                  src={photo}[m
+[31m-                  alt="Builder preview"[m
+[31m-                  className="h-full w-full object-cover"[m
+[31m-                />[m
+[32m+[m[32m                <>[m
+[32m+[m[32m                  <img[m
+[32m+[m[32m                    src={photo}[m
+[32m+[m[32m                    alt="Builder preview"[m
+[32m+[m[32m                    draggable={false}[m
+[32m+[m[32m                    className="h-full w-full object-cover"[m
+[32m+[m[32m                    style={{[m
+[32m+[m[32m                      objectPosition: `${photoPosition.x}% ${photoPosition.y}%`,[m
+[32m+[m[32m                      transform: `scale(${photoPosition.zoom})`,[m
+[32m+[m[32m                      transformOrigin:[m
+[32m+[m[32m                        "center center",[m
+[32m+[m[32m                    }}[m
+[32m+[m[32m                  />[m
+[32m+[m
+[32m+[m[32m                  {/* Drag hint */}[m
+[32m+[m[32m                  <div[m
+[32m+[m[32m                    className={`pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-[#17251d]/75 px-3 py-1.5 text-[9px] font-black tracking-[0.12em] text-white backdrop-blur-sm transition-opacity ${[m
+[32m+[m[32m                      isDraggingPhoto[m
+[32m+[m[32m                        ? "opacity-100"[m
+[32m+[m[32m                        : "opacity-70"[m
+[32m+[m[32m                    }`}[m
+[32m+[m[32m                  >[m
+[32m+[m[32m                    {isDraggingPhoto[m
+[32m+[m[32m                      ? "MOVE PHOTO"[m
+[32m+[m[32m                      : "DRAG TO FRAME"}[m
+[32m+[m[32m                  </div>[m
+[32m+[m[32m                </>[m
+               ) : ([m
+                 <div className="flex h-full flex-col items-center justify-center text-center">[m
+                   <div className="text-5xl opacity-30">[m
+[36m@@ -89,13 +276,48 @@[m [mexport default function BuilderCard({[m
+                   </p>[m
+                 </div>[m
+               )}[m
+[31m-[m
+             </div>[m
+           </div>[m
+ [m
+[32m+[m[32m          {/* Photo controls */}[m
+[32m+[m[32m          {photo && ([m
+[32m+[m[32m            <div className="relative z-10 flex items-center justify-center gap-3 px-6 pt-3">[m
+[32m+[m[32m              <button[m
+[32m+[m[32m                type="button"[m
+[32m+[m[32m                onClick={zoomOut}[m
+[32m+[m[32m                disabled={photoPosition.zoom <= 1}[m
+[32m+[m[32m                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#17251d] bg-white text-sm font-black transition hover:bg-[#17251d] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"[m
+[32m+[m[32m                aria-label="Zoom out"[m
+[32m+[m[32m              >[m
+[32m+[m[32m                −[m
+[32m+[m[32m              </button>[m
+[32m+[m
+[32m+[m[32m              <span className="min-w-[42px] text-center text-[9px] font-black tracking-[0.15em] text-[#17251d]/50">[m
+[32m+[m[32m                {photoPosition.zoom.toFixed(1)}×[m
+[32m+[m[32m              </span>[m
+[32m+[m
+[32m+[m[32m              <button[m
+[32m+[m[32m                type="button"[m
+[32m+[m[32m                onClick={zoomIn}[m
+[32m+[m[32m                disabled={photoPosition.zoom >= 2}[m
+[32m+[m[32m                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#17251d] bg-white text-sm font-black transition hover:bg-[#17251d] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"[m
+[32m+[m[32m                aria-label="Zoom in"[m
+[32m+[m[32m              >[m
+[32m+[m[32m                +[m
+[32m+[m[32m              </button>[m
+[32m+[m
+[32m+[m[32m              <button[m
+[32m+[m[32m                type="button"[m
+[32m+[m[32m                onClick={resetPhoto}[m
+[32m+[m[32m                className="ml-2 text-[9px] font-black uppercase tracking-[0.12em] text-[#ef6c3d]"[m
+[32m+[m[32m              >[m
+[32m+[m[32m                Reset[m
+[32m+[m[32m              </button>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m          )}[m
+[32m+[m
+           {/* Card information */}[m
+           <div className="relative z-10 p-6">[m
+[31m-[m
+             {/* Name */}[m
+             <div className="text-3xl font-black leading-none tracking-[-0.04em] md:text-4xl">[m
+               {name || "YOUR NAME"}[m
+[36m@@ -113,14 +335,16 @@[m [mexport default function BuilderCard({[m
+               </p>[m
+ [m
+               <div className="mt-2 flex flex-wrap gap-2">[m
+[31m-                {stackItems.map((item, index) => ([m
+[31m-                  <span[m
+[31m-                    key={`${item}-${index}`}[m
+[31m-                    className="rounded-full border border-[#17251d]/15 bg-white/70 px-3 py-1.5 text-[10px] font-bold backdrop-blur-sm"[m
+[31m-                  >[m
+[31m-                    {item}[m
+[31m-                  </span>[m
+[31m-                ))}[m
+[32m+[m[32m                {stackItems.map([m
+[32m+[m[32m                  (item, index) => ([m
+[32m+[m[32m                    <span[m
+[32m+[m[32m                      key={`${item}-${index}`}[m
+[32m+[m[32m                      className="rounded-full border border-[#17251d]/15 bg-white/70 px-3 py-1.5 text-[10px] font-bold backdrop-blur-sm"[m
+[32m+[m[32m                    >[m
+[32m+[m[32m                      {item}[m
+[32m+[m[32m                    </span>[m
+[32m+[m[32m                  )[m
+[32m+[m[32m                )}[m
+               </div>[m
+             </div>[m
+ [m
+[36m@@ -151,7 +375,6 @@[m [mexport default function BuilderCard({[m
+                 #FrameInGoa[m
+               </div>[m
+             </div>[m
+[31m-[m
+           </div>[m
+         </div>[m
+       </div>[m
+[1mdiff --git a/app/page.tsx b/app/page.tsx[m
+[1mindex a5b1bf7..f6e3ddb 100644[m
+[1m--- a/app/page.tsx[m
+[1m+++ b/app/page.tsx[m
+[36m@@ -7,19 +7,53 @@[m [mimport BuilderForm from "./components/BuilderForm";[m
+ import BuilderCard from "./components/BuilderCard";[m
+ import { getBuilderTitle } from "./lib/builderTitles";[m
+ [m
+[32m+[m[32mtype PhotoPosition = {[m
+[32m+[m[32m  x: number;[m
+[32m+[m[32m  y: number;[m
+[32m+[m[32m  zoom: number;[m
+[32m+[m[32m};[m
+[32m+[m
+ export default function Home() {[m
+[31m-  const canvasRef = useRef<HTMLCanvasElement>(null);[m
+[32m+[m[32m  const canvasRef =[m
+[32m+[m[32m    useRef<HTMLCanvasElement>(null);[m
+[32m+[m
+[32m+[m[32m  const [photo, setPhoto] =[m
+[32m+[m[32m    useState<string | null>(null);[m
+[32m+[m
+[32m+[m[32m  const [fileName, setFileName] =[m
+[32m+[m[32m    useState("");[m
+[32m+[m
+[32m+[m[32m  const [name, setName] =[m
+[32m+[m[32m    useState("");[m
+ [m
+[31m-  const [photo, setPhoto] = useState<string | null>(null);[m
+[31m-  const [fileName, setFileName] = useState("");[m
+[32m+[m[32m  const [role, setRole] =[m
+[32m+[m[32m    useState("");[m
+[32m+[m
+[32m+[m[32m  const [stack, setStack] =[m
+[32m+[m[32m    useState("");[m
+[32m+[m
+[32m+[m[32m  const [photoPosition, setPhotoPosition] =[m
+[32m+[m[32m    useState<PhotoPosition>({[m
+[32m+[m[32m      x: 50,[m
+[32m+[m[32m      y: 50,[m
+[32m+[m[32m      zoom: 1,[m
+[32m+[m[32m    });[m
+ [m
+[31m-  const [name, setName] = useState("");[m
+[31m-  const [role, setRole] = useState("");[m
+[31m-  const [stack, setStack] = useState("");[m
+[32m+[m[32m  const [isGenerating, setIsGenerating] =[m
+[32m+[m[32m    useState(false);[m
+ [m
+[31m-  const builderTitle = getBuilderTitle(role);[m
+[32m+[m[32m  const [isSharing, setIsSharing] =[m
+[32m+[m[32m    useState(false);[m
+ [m
+[31m-   const handleUpload = async (file: File) => {[m
+[32m+[m[32m  const builderTitle =[m
+[32m+[m[32m    getBuilderTitle(role);[m
+[32m+[m
+[32m+[m[32m  /*[m
+[32m+[m[32m   * Upload[m
+[32m+[m[32m   */[m
+[32m+[m[32m  const handleUpload = async ([m
+[32m+[m[32m    file: File[m
+[32m+[m[32m  ) => {[m
+     if (!file) return;[m
+ [m
+     const validTypes = [[m
+[36m@@ -30,7 +64,9 @@[m [mexport default function Home() {[m
+     ];[m
+ [m
+     if (!validTypes.includes(file.type)) {[m
+[31m-      alert("Please upload a JPG, PNG or HEIC image.");[m
+[32m+[m[32m      alert([m
+[32m+[m[32m        "Please upload a JPG, PNG or HEIC image."[m
+[32m+[m[32m      );[m
+       return;[m
+     }[m
+ [m
+[36m@@ -38,12 +74,22 @@[m [mexport default function Home() {[m
+       URL.revokeObjectURL(photo);[m
+     }[m
+ [m
+[31m-    const imageUrl = URL.createObjectURL(file);[m
+[32m+[m[32m    const imageUrl =[m
+[32m+[m[32m      URL.createObjectURL(file);[m
+ [m
+     setPhoto(imageUrl);[m
+     setFileName(file.name);[m
+[32m+[m
+[32m+[m[32m    setPhotoPosition({[m
+[32m+[m[32m      x: 50,[m
+[32m+[m[32m      y: 50,[m
+[32m+[m[32m      zoom: 1,[m
+[32m+[m[32m    });[m
+   };[m
+ [m
+[32m+[m[32m  /*[m
+[32m+[m[32m   * Remove photo[m
+[32m+[m[32m   */[m
+   const removePhoto = () => {[m
+     if (photo) {[m
+       URL.revokeObjectURL(photo);[m
+[36m@@ -51,342 +97,821 @@[m [mexport default function Home() {[m
+ [m
+     setPhoto(null);[m
+     setFileName("");[m
+[31m-  };[m
+ [m
+[31m-  const generateCard = async () => {[m
+[31m-    if (!photo || !name || !role || !stack) {[m
+[31m-      alert("Please complete your profile first.");[m
+[31m-      return;[m
+[31m-    }[m
+[31m-[m
+[31m-    const canvas = canvasRef.current;[m
+[32m+[m[32m    setPhotoPosition({[m
+[32m+[m[32m      x: 50,[m
+[32m+[m[32m      y: 50,[m
+[32m+[m[32m      zoom: 1,[m
+[32m+[m[32m    });[m
+[32m+[m[32m  };[m
+ [m
+[31m-    if (!canvas) return;[m
+[32m+[m[32m  /*[m
+[32m+[m[32m   * Create the actual PNG blob.[m
+[32m+[m[32m   *[m
+[32m+[m[32m   * This is shared by both:[m
+[32m+[m[32m   *[m
+[32m+[m[32m   * DOWNLOAD[m
+[32m+[m[32m   *[m
+[32m+[m[32m   * and[m
+[32m+[m[32m   *[m
+[32m+[m[32m   * SHARE TO X[m
+[32m+[m[32m   *[m
+[32m+[m[32m   * so both flows always use the exact[m
+[32m+[m[32m   * same generated card.[m
+[32m+[m[32m   */[m
+[32m+[m[32m  const createCardBlob =[m
+[32m+[m[32m    async (): Promise<Blob | null> => {[m
+[32m+[m[32m      if ([m
+[32m+[m[32m        !photo ||[m
+[32m+[m[32m        !name ||[m
+[32m+[m[32m        !role ||[m
+[32m+[m[32m        !stack[m
+[32m+[m[32m      ) {[m
+[32m+[m[32m        return null;[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      const canvas =[m
+[32m+[m[32m        canvasRef.current;[m
+[32m+[m
+[32m+[m[32m      if (!canvas) {[m
+[32m+[m[32m        throw new Error([m
+[32m+[m[32m          "Canvas is not available."[m
+[32m+[m[32m        );[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      const ctx =[m
+[32m+[m[32m        canvas.getContext("2d");[m
+[32m+[m
+[32m+[m[32m      if (!ctx) {[m
+[32m+[m[32m        throw new Error([m
+[32m+[m[32m          "Canvas context is not available."[m
+[32m+[m[32m        );[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      const WIDTH = 1080;[m
+[32m+[m[32m      const HEIGHT = 1350;[m
+[32m+[m
+[32m+[m[32m      canvas.width = WIDTH;[m
+[32m+[m[32m      canvas.height = HEIGHT;[m
+[32m+[m
+[32m+[m[32m      /*[m
+[32m+[m[32m       * Background[m
+[32m+[m[32m       */[m
+[32m+[m[32m      ctx.fillStyle = "#f7e6ca";[m
+[32m+[m
+[32m+[m[32m      ctx.fillRect([m
+[32m+[m[32m        0,[m
+[32m+[m[32m        0,[m
+[32m+[m[32m        WIDTH,[m
+[32m+[m[32m        HEIGHT[m
+[32m+[m[32m      );[m
+ [m
+[31m-    const ctx = canvas.getContext("2d");[m
+[32m+[m[32m      /*[m
+[32m+[m[32m       * Sun[m
+[32m+[m[32m       */[m
+[32m+[m[32m      ctx.fillStyle = "#f6b73c";[m
+ [m
+[31m-    if (!ctx) return;[m
+[32m+[m[32m      ctx.beginPath();[m
+ [m
+[31m-    const WIDTH = 1080;[m
+[31m-    const HEIGHT = 1350;[m
+[32m+[m[32m      ctx.arc([m
+[32m+[m[32m        900,[m
+[32m+[m[32m        80,[m
+[32m+[m[32m        210,[m
+[32m+[m[32m        0,[m
+[32m+[m[32m        Math.PI * 2[m
+[32m+[m[32m      );[m
+ [m
+[31m-    canvas.width = WIDTH;[m
+[31m-    canvas.height = HEIGHT;[m
+[32m+[m[32m      ctx.fill();[m
+ [m
+[31m-    // Background[m
+[31m-    ctx.fillStyle = "#f7e6ca";[m
+[31m-    ctx.fillRect(0, 0, WIDTH, HEIGHT);[m
+[32m+[m[32m      /*[m
+[32m+[m[32m       * Ocean[m
+[32m+[m[32m       */[m
+[32m+[m[32m      ctx.fillStyle = "#4ea8a1";[m
+ [m
+[31m-    // Sun[m
+[31m-    ctx.fillStyle = "#f6b73c";[m
+[31m- 

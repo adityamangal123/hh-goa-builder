@@ -1,11 +1,27 @@
 "use client";
 
+import {
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
+
+type PhotoPosition = {
+  x: number;
+  y: number;
+  zoom: number;
+};
+
 type BuilderCardProps = {
   photo: string | null;
   name: string;
   role: string;
   stack: string;
   builderTitle: string;
+  photoPosition: PhotoPosition;
+  onPhotoPositionChange: (
+    position: PhotoPosition
+  ) => void;
 };
 
 export default function BuilderCard({
@@ -14,8 +30,140 @@ export default function BuilderCard({
   role,
   stack,
   builderTitle,
+  photoPosition,
+  onPhotoPositionChange,
 }: BuilderCardProps) {
   const stackItems = getStackItems(stack);
+
+  const photoContainerRef =
+    useRef<HTMLDivElement>(null);
+
+  const dragRef = useRef({
+    active: false,
+    startX: 0,
+    startY: 0,
+    startPhotoX: 50,
+    startPhotoY: 50,
+  });
+
+  const [isDraggingPhoto, setIsDraggingPhoto] =
+    useState(false);
+
+  const handlePhotoPointerDown = (
+    event: ReactPointerEvent<HTMLDivElement>
+  ) => {
+    if (!photo) return;
+
+    event.preventDefault();
+
+    event.currentTarget.setPointerCapture(
+      event.pointerId
+    );
+
+    dragRef.current = {
+      active: true,
+      startX: event.clientX,
+      startY: event.clientY,
+      startPhotoX: photoPosition.x,
+      startPhotoY: photoPosition.y,
+    };
+
+    setIsDraggingPhoto(true);
+  };
+
+  const handlePhotoPointerMove = (
+    event: ReactPointerEvent<HTMLDivElement>
+  ) => {
+    if (!dragRef.current.active) return;
+
+    const container =
+      photoContainerRef.current;
+
+    if (!container) return;
+
+    const rect =
+      container.getBoundingClientRect();
+
+    const deltaX =
+      ((event.clientX - dragRef.current.startX) /
+        rect.width) *
+      100;
+
+    const deltaY =
+      ((event.clientY - dragRef.current.startY) /
+        rect.height) *
+      100;
+
+    const nextX = Math.max(
+      0,
+      Math.min(
+        100,
+        dragRef.current.startPhotoX + deltaX
+      )
+    );
+
+    const nextY = Math.max(
+      0,
+      Math.min(
+        100,
+        dragRef.current.startPhotoY + deltaY
+      )
+    );
+
+    onPhotoPositionChange({
+      ...photoPosition,
+      x: nextX,
+      y: nextY,
+    });
+  };
+
+  const handlePhotoPointerUp = (
+    event: ReactPointerEvent<HTMLDivElement>
+  ) => {
+    dragRef.current.active = false;
+
+    setIsDraggingPhoto(false);
+
+    try {
+      event.currentTarget.releasePointerCapture(
+        event.pointerId
+      );
+    } catch {
+      // Pointer capture may already be released.
+    }
+  };
+
+  const zoomOut = () => {
+    onPhotoPositionChange({
+      ...photoPosition,
+      zoom: Math.max(
+        1,
+        Number(
+          (photoPosition.zoom - 0.1).toFixed(2)
+        )
+      ),
+    });
+  };
+
+  const zoomIn = () => {
+    onPhotoPositionChange({
+      ...photoPosition,
+      zoom: Math.min(
+        2,
+        Number(
+          (photoPosition.zoom + 0.1).toFixed(2)
+        )
+      ),
+    });
+  };
+
+  const resetPhoto = () => {
+    onPhotoPositionChange({
+      x: 50,
+      y: 50,
+      zoom: 1,
+    });
+  };
 
   return (
     <div>
@@ -39,7 +187,6 @@ export default function BuilderCard({
       {/* Card */}
       <div className="mx-auto max-w-[520px] rounded-[2rem] border-2 border-[#17251d] bg-white p-3 shadow-[10px_10px_0px_#ef6c3d]">
         <div className="relative overflow-hidden rounded-[1.5rem] bg-[#f7e6ca]">
-
           {/* Background sun */}
           <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#f6b73c]" />
 
@@ -70,14 +217,54 @@ export default function BuilderCard({
 
           {/* Photo */}
           <div className="relative z-10 px-6">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-[1.5rem] border-2 border-[#17251d] bg-[#fff8ed] shadow-[5px_5px_0px_#17251d]">
-
+            <div
+              ref={photoContainerRef}
+              onPointerDown={
+                handlePhotoPointerDown
+              }
+              onPointerMove={
+                handlePhotoPointerMove
+              }
+              onPointerUp={handlePhotoPointerUp}
+              onPointerCancel={
+                handlePhotoPointerUp
+              }
+              className={`relative aspect-[4/3] touch-none select-none overflow-hidden rounded-[1.5rem] border-2 border-[#17251d] bg-[#fff8ed] shadow-[5px_5px_0px_#17251d] ${
+                photo
+                  ? isDraggingPhoto
+                    ? "cursor-grabbing"
+                    : "cursor-grab"
+                  : ""
+              }`}
+            >
               {photo ? (
-                <img
-                  src={photo}
-                  alt="Builder preview"
-                  className="h-full w-full object-cover"
-                />
+                <>
+                  <img
+                    src={photo}
+                    alt="Builder preview"
+                    draggable={false}
+                    className="h-full w-full object-cover"
+                    style={{
+                      objectPosition: `${photoPosition.x}% ${photoPosition.y}%`,
+                      transform: `scale(${photoPosition.zoom})`,
+                      transformOrigin:
+                        "center center",
+                    }}
+                  />
+
+                  {/* Drag hint */}
+                  <div
+                    className={`pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-[#17251d]/75 px-3 py-1.5 text-[9px] font-black tracking-[0.12em] text-white backdrop-blur-sm transition-opacity ${
+                      isDraggingPhoto
+                        ? "opacity-100"
+                        : "opacity-70"
+                    }`}
+                  >
+                    {isDraggingPhoto
+                      ? "MOVE PHOTO"
+                      : "DRAG TO FRAME"}
+                  </div>
+                </>
               ) : (
                 <div className="flex h-full flex-col items-center justify-center text-center">
                   <div className="text-5xl opacity-30">
@@ -89,13 +276,48 @@ export default function BuilderCard({
                   </p>
                 </div>
               )}
-
             </div>
           </div>
 
+          {/* Photo controls */}
+          {photo && (
+            <div className="relative z-10 flex items-center justify-center gap-3 px-6 pt-3">
+              <button
+                type="button"
+                onClick={zoomOut}
+                disabled={photoPosition.zoom <= 1}
+                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#17251d] bg-white text-sm font-black transition hover:bg-[#17251d] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                aria-label="Zoom out"
+              >
+                −
+              </button>
+
+              <span className="min-w-[42px] text-center text-[9px] font-black tracking-[0.15em] text-[#17251d]/50">
+                {photoPosition.zoom.toFixed(1)}×
+              </span>
+
+              <button
+                type="button"
+                onClick={zoomIn}
+                disabled={photoPosition.zoom >= 2}
+                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#17251d] bg-white text-sm font-black transition hover:bg-[#17251d] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                aria-label="Zoom in"
+              >
+                +
+              </button>
+
+              <button
+                type="button"
+                onClick={resetPhoto}
+                className="ml-2 text-[9px] font-black uppercase tracking-[0.12em] text-[#ef6c3d]"
+              >
+                Reset
+              </button>
+            </div>
+          )}
+
           {/* Card information */}
           <div className="relative z-10 p-6">
-
             {/* Name */}
             <div className="text-3xl font-black leading-none tracking-[-0.04em] md:text-4xl">
               {name || "YOUR NAME"}
@@ -113,14 +335,16 @@ export default function BuilderCard({
               </p>
 
               <div className="mt-2 flex flex-wrap gap-2">
-                {stackItems.map((item, index) => (
-                  <span
-                    key={`${item}-${index}`}
-                    className="rounded-full border border-[#17251d]/15 bg-white/70 px-3 py-1.5 text-[10px] font-bold backdrop-blur-sm"
-                  >
-                    {item}
-                  </span>
-                ))}
+                {stackItems.map(
+                  (item, index) => (
+                    <span
+                      key={`${item}-${index}`}
+                      className="rounded-full border border-[#17251d]/15 bg-white/70 px-3 py-1.5 text-[10px] font-bold backdrop-blur-sm"
+                    >
+                      {item}
+                    </span>
+                  )
+                )}
               </div>
             </div>
 
@@ -151,7 +375,6 @@ export default function BuilderCard({
                 #FrameInGoa
               </div>
             </div>
-
           </div>
         </div>
       </div>
