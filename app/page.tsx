@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import heic2any from "heic2any";
 
 export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
