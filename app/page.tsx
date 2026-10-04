@@ -9,13 +9,83 @@ export default function Home() {
 
   const [photo, setPhoto] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [stack, setStack] = useState("");
 
-  const handleUpload = (file: File) => {
-    if (!file) return;
+ const handleUpload = async (file: File) => {
+  if (!file) return;
+  setIsProcessing(true);
+
+  const fileName = file.name.toLowerCase();
+
+  const isHEIC =
+    file.type === "image/heic" ||
+    file.type === "image/heif" ||
+    fileName.endsWith(".heic") ||
+    fileName.endsWith(".heif");
+
+  const isSupportedImage =
+    file.type === "image/jpeg" ||
+    file.type === "image/png";
+
+  if (!isHEIC && !isSupportedImage) {
+    alert("Please upload a JPG, PNG or HEIC image.");
+    return;
+  }
+
+  try {
+    let imageBlob: Blob = file;
+
+    /*
+     * Convert HEIC/HEIF to JPEG
+     */
+    if (isHEIC) {
+      imageBlob = await heic2any({
+        blob: file,
+        toType: "image/jpeg",
+        quality: 0.9,
+      });
+
+      /*
+       * heic2any can return Blob[] for some files
+       */
+      if (Array.isArray(imageBlob)) {
+        imageBlob = imageBlob[0];
+      }
+    }
+
+    /*
+     * Remove previous object URL
+     */
+    if (photo) {
+      URL.revokeObjectURL(photo);
+    }
+
+    /*
+     * Create browser preview
+     */
+    const imageUrl = URL.createObjectURL(imageBlob);
+
+    setPhoto(imageUrl);
+
+    /*
+     * Keep original filename for display
+     */
+    setFileName(file.name);
+    setIsProcessing(false);
+  } catch (error) {
+    console.error("HEIC conversion failed:", error);
+
+    alert(
+      "We couldn't process this photo. Please try another image."
+      setIsProcessing(false);
+    );
+  }
+};
+
 
     const validTypes = [
       "image/jpeg",
@@ -39,16 +109,15 @@ export default function Home() {
     setFileName(file.name);
   };
 
-  const handleFileChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
+ const handleFileChange = async (
+  event: React.ChangeEvent<HTMLInputElement>
+) => {
+  const file = event.target.files?.[0];
 
-    if (file) {
-      handleUpload(file);
-    }
-  };
-
+  if (file) {
+    await handleUpload(file);
+  }
+};
   const removePhoto = () => {
     if (photo) {
       URL.revokeObjectURL(photo);
@@ -516,22 +585,27 @@ export default function Home() {
 
                 {!photo ? (
                   <button
-                    onClick={() =>
-                      fileInputRef.current?.click()
-                    }
-                    className="mt-3 flex h-48 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#17251d]/25 bg-[#f7e6ca] transition hover:border-[#ef6c3d] hover:bg-[#f4dfbd]"
+  disabled={isProcessing}
+  onClick={() =>
+    fileInputRef.current?.click()
+  }
+                   className="mt-3 flex h-48 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#17251d]/25 bg-[#f7e6ca] transition hover:border-[#ef6c3d] hover:bg-[#f4dfbd] disabled:cursor-wait disabled:opacity-60"
                   >
                     <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#ef6c3d] text-3xl text-white">
                       +
                     </div>
 
-                    <p className="mt-3 text-sm font-black">
-                      Upload your photo
-                    </p>
+                   <p className="mt-3 text-sm font-black">
+  {isProcessing
+    ? "Preparing your photo..."
+    : "Upload your photo"}
+</p>
 
-                    <p className="mt-1 text-xs text-[#17251d]/50">
-                      JPG • PNG • HEIC
-                    </p>
+<p className="mt-1 text-xs text-[#17251d]/50">
+  {isProcessing
+    ? "Just a moment"
+    : "JPG • PNG • HEIC"}
+</p>
                   </button>
                 ) : (
                   <div className="mt-3">
